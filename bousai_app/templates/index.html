@@ -26,10 +26,58 @@
     }
 
     body > h1::after {
-        content: "☰";
+        content: none;
+    }
+
+    .home-menu {
+        position: relative;
         float: right;
+    }
+
+    .menu-toggle {
+        display: inline-flex;
+        width: 38px;
+        height: 34px;
+        align-items: center;
+        justify-content: center;
+        padding: 0;
+        border: 0;
+        background: transparent;
+        color: #fff;
+        cursor: pointer;
         font-size: 28px;
-        line-height: 32px;
+        line-height: 1;
+    }
+
+    .menu-panel {
+        position: absolute;
+        z-index: 1000;
+        top: 46px;
+        right: 0;
+        display: none;
+        width: 230px;
+        padding: 8px 0;
+        border-radius: 8px;
+        background: #fff;
+        box-shadow: 0 8px 22px rgba(23, 54, 91, 0.22);
+    }
+
+    .menu-panel.is-open {
+        display: block;
+    }
+
+    .menu-panel a {
+        display: block;
+        padding: 12px 18px;
+        color: #23456f;
+        font-size: 15px;
+        text-decoration: none;
+    }
+
+    .menu-panel a:hover,
+    .menu-panel a:focus {
+        background: #f0f5fb;
+        outline: none;
     }
 
     body > nav,
@@ -161,6 +209,23 @@
 </style>
 {% endblock %}
 
+{% block header_actions %}
+<span class="home-menu">
+    <button class="menu-toggle" type="button" aria-label="メニューを開く" aria-expanded="false" aria-controls="homeMenu">☰</button>
+    <span class="menu-panel" id="homeMenu" aria-hidden="true">
+        <a href="/">ホーム</a>
+        <a href="/shelter_search">避難所検索</a>
+        <a href="/shelter_register">避難所登録</a>
+        <a href="/board">指示・発信ボード</a>
+        {% if session.logged_in %}
+        <a href="/logout">ログアウト</a>
+        {% else %}
+        <a href="/login">ログイン</a>
+        {% endif %}
+    </span>
+</span>
+{% endblock %}
+
 {% block content %}
 <section class="home-card">
     <h2>📍 避難所マップ</h2>
@@ -183,6 +248,36 @@
 
 <script>
 document.addEventListener('DOMContentLoaded', function() {
+    const menuToggle = document.querySelector('.menu-toggle');
+    const menuPanel = document.getElementById('homeMenu');
+
+    function closeMenu() {
+        menuPanel.classList.remove('is-open');
+        menuToggle.setAttribute('aria-expanded', 'false');
+        menuToggle.setAttribute('aria-label', 'メニューを開く');
+        menuPanel.setAttribute('aria-hidden', 'true');
+    }
+
+    menuToggle.addEventListener('click', function(event) {
+        event.stopPropagation();
+        const isOpen = menuPanel.classList.toggle('is-open');
+        menuToggle.setAttribute('aria-expanded', String(isOpen));
+        menuToggle.setAttribute('aria-label', isOpen ? 'メニューを閉じる' : 'メニューを開く');
+        menuPanel.setAttribute('aria-hidden', String(!isOpen));
+    });
+
+    document.addEventListener('click', function(event) {
+        if (!event.target.closest('.home-menu')) {
+            closeMenu();
+        }
+    });
+
+    document.addEventListener('keydown', function(event) {
+        if (event.key === 'Escape') {
+            closeMenu();
+        }
+    });
+
     // 地図の初期化（藤沢市周辺を中心に設定）
     const map = L.map('shelterMap').setView([35.3390, 139.4903], 12);
 
